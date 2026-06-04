@@ -1,0 +1,113 @@
+name: Complete CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  # JOB 1 - CHECKOUT + VALIDATION
+  validation:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Display Files
+        run: ls -la
+
+      - name: Validate HTML File
+        run: test -f index.html
+
+      - name: Validation Success
+        run: echo "Project validation completed successfully"
+
+
+  # JOB 2 - BUILD DOCKER IMAGE
+  docker-build:
+
+    needs: validation
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t college-app .
+
+      - name: Show Docker Images
+        run: docker images
+
+
+  # JOB 3 - PUSH IMAGE TO DOCKER HUB
+  docker-push:
+
+    needs: docker-build
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t college-app .
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Tag Docker Image
+        run: |
+          docker tag college-app YOUR_DOCKER_USERNAME/college-app:v1
+
+      - name: Push Docker Image
+        run: |
+          docker push YOUR_DOCKER_USERNAME/college-app:v1
+
+
+  # JOB 4 - KUBERNETES YAML VALIDATION
+  kubernetes-validation:
+
+    needs: docker-push
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Verify Kubernetes Files
+        run: |
+          test -f deployment.yml
+          test -f service.yml
+
+      - name: Kubernetes Validation Success
+        run: echo "Kubernetes YAML files verified"
+
+
+  # JOB 5 - DEPLOYMENT SUCCESS MESSAGE
+  deployment-status:
+
+    needs: kubernetes-validation
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Deployment Complete
+        run: |
+          echo "CI/CD Pipeline Executed Successfully"
+          echo "Docker Image Pushed"
+          echo "Kubernetes Files Verified"
