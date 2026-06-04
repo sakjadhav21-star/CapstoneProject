@@ -76,7 +76,7 @@ jobs:
           docker push YOUR_DOCKER_USERNAME/college-app:v1
 
 
-  # JOB 4 - KUBERNETES YAML VALIDATION
+  # JOB 4 - KUBERNETES YAML VALIDATIONsgit status
   kubernetes-validation:
 
     needs: docker-push
