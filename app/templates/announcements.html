@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Announcements</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Announcements</h1>
+
+    <ul>
+        {% for n in news %}
+            <li>{{ n }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="/dashboard/student1">Back</a>
+
+</div>
+
+</body>
+</html>
