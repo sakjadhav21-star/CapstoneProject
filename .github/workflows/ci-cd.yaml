@@ -28,7 +28,8 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install pytest
+          if [ -f app/requirements.txt ]; then pip install -r app/requirements.txt; fi
 
       # 🚨 Quick Note: Make sure pytest can find your test.py file!
       - name: Run Unit Tests with Pytest
