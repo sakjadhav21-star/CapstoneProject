@@ -34,7 +34,7 @@ jobs:
       # 🚨 Quick Note: Make sure pytest can find your test.py file!
       - name: Run Unit Tests with Pytest
         run: |
-          python -m pytest -v
+          python -m pytest -v gitaction/      # 👈 Added the folder path here
           
   # Job 2: Build and Push Docker Image (Safely remains Main branch pushes only)
   build-and-push-image:
