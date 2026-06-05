@@ -78,7 +78,15 @@ jobs:
 
       - name: Set Release Image Tag
         run: |
-          sed -i "s|image: nexus.college.edu:8082/college-flask-portal:latest|image: ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" kubernetes/deployment.yaml
+          - name: Set Kubernetes Context
+  uses: azure/k8s-set-context@v3
+  with:
+    method: kubeconfig
+    cluster-type: generic
+    kubeconfig: ${{ secrets.KUBECONFIG }}
+
+  env:
+    IMAGE_NAME: student-portal
 
       - name: Deploy Manifests to Cluster
         run: |
