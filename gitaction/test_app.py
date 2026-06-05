@@ -37,3 +37,4 @@ def test_dashboard_page(client):
     response = client.get('/dashboard/student1')
     assert response.status_code == 200
     assert b"student1" in response.data
+  //done
