@@ -1,4 +1,4 @@
-Python
+
 import pytest
 # 1. This explicitly tells Python: Go into 'app' folder, open 'app.py', and grab the 'app' variable
 from app.app import app 
