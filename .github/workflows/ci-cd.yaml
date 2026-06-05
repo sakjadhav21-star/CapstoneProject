@@ -2,9 +2,9 @@ name: College Portal CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "feature-login" ]       # 👈 Added your branch here
+    branches: [ "main", "feature-login" ]       
   pull_request:
-    branches: [ "main", "feature-login" ]       # 👈 Added your branch here
+    branches: [ "main", "feature-login" ]     
 
 env:
   NEXUS_REGISTRY: nexus.college.edu:8082
@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12" # 👈 Change this line from "3.10" to "3.12"
+          python-version: "3.12" 
           cache: "pip"
 
       - name: Install Dependencies
@@ -31,10 +31,10 @@ jobs:
           python -m pip install pytest
           if [ -f app/requirements.txt ]; then pip install -r app/requirements.txt; fi
 
-      # 🚨 Quick Note: Make sure pytest can find your test.py file!
+      
       - name: Run Unit Tests with Pytest
         run: |
-          python -m pytest -v gitaction/      # 👈 Added the folder path here
+          python -m pytest -v gitaction/      
           
   # Job 2: Build and Push Docker Image (Safely remains Main branch pushes only)
   build-and-push-image:
@@ -48,22 +48,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Nexus Registry
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.NEXUS_REGISTRY }}
-          username: ${{ secrets.NEXUS_USERNAME }}
-          password: ${{ secrets.NEXUS_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./app/Dockerfile  # <--- ADD THIS LINE (make sure it points to your folder)
           push: true
-          tags: |
-            ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: your-dockerhub-username/college-portal:latest
 
   # Job 3: Deploy to Kubernetes Cluster (Safely remains Main branch pushes only)
   deploy-to-kubernetes:
