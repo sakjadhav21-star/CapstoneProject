@@ -2,9 +2,9 @@ name: College Portal CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "feature-login" ]       # 👈 Added your branch here
+    branches: [ "main", "feature-login" ]       
   pull_request:
-    branches: [ "main", "feature-login" ]       # 👈 Added your branch here
+    branches: [ "main", "feature-login" ]     
 
 env:
   NEXUS_REGISTRY: nexus.college.edu:8082
@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12" # 👈 Change this line from "3.10" to "3.12"
+          python-version: "3.12" 
           cache: "pip"
 
       - name: Install Dependencies
@@ -31,10 +31,10 @@ jobs:
           python -m pip install pytest
           if [ -f app/requirements.txt ]; then pip install -r app/requirements.txt; fi
 
-      # 🚨 Quick Note: Make sure pytest can find your test.py file!
+      
       - name: Run Unit Tests with Pytest
         run: |
-          python -m pytest -v gitaction/      # 👈 Added the folder path here
+          python -m pytest -v gitaction/      
           
   # Job 2: Build and Push Docker Image (Safely remains Main branch pushes only)
   build-and-push-image:
