@@ -54,15 +54,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./app/Dockerfile  # <--- ADD THIS LINE (make sure it points to your folder)
           push: true
-          tags: |
-            ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: your-dockerhub-username/college-portal:latest
 
   # Job 3: Deploy to Kubernetes Cluster (Safely remains Main branch pushes only)
   deploy-to-kubernetes:
