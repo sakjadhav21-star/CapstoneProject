@@ -61,8 +61,8 @@ jobs:
           file: ./app/Dockerfile
           push: true
           tags: |
-            ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+           ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest 
+           ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   # Job 3: Deploy to Kubernetes Cluster (Safely remains Main branch pushes only)
   deploy-to-kubernetes:
@@ -85,8 +85,8 @@ jobs:
 
       - name: Deploy Manifests to Cluster
         run: |
-          kubectl apply -f kubernetes/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f kubernetes/service.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
 
       - name: Verify Deployment Rollout Status
         run: |
