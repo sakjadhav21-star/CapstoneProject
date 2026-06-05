@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subjects</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Subjects</h1>
+
+    <ul>
+        {% for s in subjects %}
+            <li>{{ s }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="/dashboard/student1">Back</a>
+
+</div>
+
+</body>
+</html>
