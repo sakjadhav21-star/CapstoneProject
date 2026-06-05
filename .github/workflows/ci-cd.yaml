@@ -2,9 +2,9 @@ name: College Portal CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature-login" ]       # 👈 Added your branch here
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feature-login" ]       # 👈 Added your branch here
 
 env:
   NEXUS_REGISTRY: nexus.college.edu:8082
@@ -12,7 +12,7 @@ env:
   K8S_NAMESPACE: college-apps
 
 jobs:
-  # Job 1: Build & Run Pytest Unit Tests
+  # Job 1: Build & Run Pytest Unit Tests (Will now run on feature-login!)
   test-and-lint:
     runs-on: ubuntu-latest
     steps:
@@ -30,11 +30,12 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+      # 🚨 Quick Note: Make sure pytest can find your test.py file!
       - name: Run Unit Tests with Pytest
         run: |
           python -m pytest -v
           
-  # Job 2: Build and Push Docker Image (Main branch pushes only)
+  # Job 2: Build and Push Docker Image (Safely remains Main branch pushes only)
   build-and-push-image:
     needs: test-and-lint
     runs-on: ubuntu-latest
@@ -63,7 +64,7 @@ jobs:
             ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  # Job 3: Deploy to Kubernetes Cluster (Main branch pushes only)
+  # Job 3: Deploy to Kubernetes Cluster (Safely remains Main branch pushes only)
   deploy-to-kubernetes:
     needs: build-and-push-image
     runs-on: ubuntu-latest
