@@ -78,15 +78,7 @@ jobs:
 
       - name: Set Release Image Tag
         run: |
-          - name: Set Kubernetes Context
-  uses: azure/k8s-set-context@v3
-  with:
-    method: kubeconfig
-    cluster-type: generic
-    kubeconfig: ${{ secrets.KUBECONFIG }}
-
-  env:
-    IMAGE_NAME: student-portal
+          student-portal
 
       - name: Deploy Manifests to Cluster
         run: |
@@ -96,5 +88,3 @@ jobs:
       - name: Verify Deployment Rollout Status
         run: |
           kubectl rollout status deployment/college-flask-portal-deployment -n ${{ env.K8S_NAMESPACE }}
-          
-
