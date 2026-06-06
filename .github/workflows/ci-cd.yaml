@@ -81,7 +81,7 @@ jobs:
 
       - name: Set Release Image Tag
         run: |
-          sed -i "s|image: nexus.college.edu:8082/college-flask-portal:latest|image: ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" kubernetes/deployment.yaml
+          sed -i "s|image: nexus.college.edu:8082/college-flask-portal:latest|image: ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yaml
 
       - name: Deploy Manifests to Cluster
         run: |
