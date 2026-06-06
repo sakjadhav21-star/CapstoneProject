@@ -1,124 +1,94 @@
 name: College Portal CI/CD Pipeline
 
 on:
-push:
-branches:
-- main
-- feature-login
-
-pull_request:
-branches:
-- main
-- feature-login
+  push:
+    branches: [ "main", "feature-login" ]       
+  pull_request:
+    branches: [ "main", "feature-login" ]     
 
 env:
-IMAGE_NAME: college-flask-portal
-K8S_NAMESPACE: college-apps
+  NEXUS_REGISTRY: nexus.college.edu:8082
+  IMAGE_NAME: college-flask-portal
+  K8S_NAMESPACE: college-apps
 
 jobs:
+  # Job 1: Build & Run Pytest Unit Tests (Will now run on feature-login!)
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-# -----------------------------------
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" 
+          cache: "pip"
 
-# Job 1 : Run Tests
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          if [ -f app/requirements.txt ]; then pip install -r app/requirements.txt; fi
 
-# -----------------------------------
+      
+      - name: Run Unit Tests with Pytest
+        run: |
+          python -m pytest -v gitaction/      
+          
+  # Job 2: Build and Push Docker Image (Safely remains Main branch pushes only)
+  build-and-push-image:
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-test-and-lint:
-runs-on: ubuntu-latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-steps:
-  - name: Checkout Code
-    uses: actions/checkout@v4
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./app/Dockerfile
+          push: true
+          tags: |
+           ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest 
+           ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  - name: Set up Python 3.12
-    uses: actions/setup-python@v5
-    with:
-      python-version: "3.12"
-      cache: "pip"
+  # Job 3: Deploy to Kubernetes Cluster (Safely remains Main branch pushes only)
+  deploy-to-kubernetes:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  - name: Install Dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install pytest
+      - name: Configure Kubernetes Context
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          cluster-type: generic
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-      if [ -f app/requirements.txt ]; then
-        pip install -r app/requirements.txt
-      fi
+      - name: Update Deployment Image
+        run: |
+          sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yaml
 
-  - name: Run Unit Tests with Pytest
-    run: |
-      python -m pytest -v gitaction/
+      - name: Deploy Kubernetes Manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
 
-# -----------------------------------
-
-# Job 2 : Build & Push Docker Image
-
-# -----------------------------------
-
-build-and-push-image:
-needs: test-and-lint
-runs-on: ubuntu-latest
-
-```
-if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-steps:
-  - name: Checkout Code
-    uses: actions/checkout@v4
-
-  - name: Set up Docker Buildx
-    uses: docker/setup-buildx-action@v3
-
-  - name: Login to Docker Hub
-    uses: docker/login-action@v3
-    with:
-      username: ${{ secrets.DOCKER_USERNAME }}
-      password: ${{ secrets.DOCKER_PASSWORD }}
-
-  - name: Build and Push Docker Image
-    uses: docker/build-push-action@v5
-    with:
-      context: ./app
-      file: ./app/Dockerfile
-      push: true
-      tags: |
-        ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-        ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-# -----------------------------------
-
-# Job 3 : Deploy to Kubernetes
-
-# -----------------------------------
-
-deploy-to-kubernetes:
-needs: build-and-push-image
-runs-on: ubuntu-latest
-
-
-if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-steps:
-  - name: Checkout Code
-    uses: actions/checkout@v4
-
-  - name: Configure Kubernetes Context
-    uses: azure/k8s-set-context@v3
-    with:
-      method: kubeconfig
-      cluster-type: generic
-      kubeconfig: ${{ secrets.KUBE_CONFIG }}
-
-  - name: Update Deployment Image
-    run: |
-      sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yaml
-
-  - name: Deploy Kubernetes Manifests
-    run: |
-      kubectl apply -f k8s/deployment.yaml -n ${{ env.K8S_NAMESPACE }}
-      kubectl apply -f k8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
-
-  - name: Verify Deployment Rollout
-    run: |
-      kubectl rollout status deployment/college-flask-portal-deployment -n ${{ env.K8S_NAMESPACE }}
+      - name: Verify Deployment Rollout
+        run: |
+          kubectl rollout status deployment/college-flask-portal-deployment -n ${{ env.K8S_NAMESPACE }}
